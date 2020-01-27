@@ -40,7 +40,7 @@ export const loginUserAPI = (data) => (dispatch) => {
             }
             dispatch({type: 'CHANGE_LOADING', value: false})
             dispatch({type: 'CHANGE_ISLOGIN', value: true})
-            dispatch({type: 'CHANGE_USER', value: dataUser})
+            dispatch({type: 'CHANGE_USER', value: dataUser.uid})
             resolve(dataUser)
         })
         .catch(function(error) {
@@ -57,9 +57,27 @@ export const loginUserAPI = (data) => (dispatch) => {
 }
 
 export const addDataToAPI = (data) => (dispatch) => {
-    database.ref('notes/' + data.userId).set({
+    database.ref('notes/' + data.userID).push({
         title: data.title,
         content: data.content,
         date: data.date
       });
+}
+
+export const getDataFromAPI = (userID) => (dispatch) => {
+    const urlNotes = database.ref('notes/' + userID);
+    return new Promise ((resolve, reject) => {
+        urlNotes.on('value', function(snapshot) {
+            console.log("get Data : ", snapshot.val());
+            const data = []; 
+            Object.keys(snapshot.val()).map(key => {
+                data.push({
+                    id: key,
+                    data: snapshot.val()[key]
+                })
+            })
+            dispatch({type: "SET_NOTES", value: data})
+            resolve(snapshot.val())
+        });
+    })
 }

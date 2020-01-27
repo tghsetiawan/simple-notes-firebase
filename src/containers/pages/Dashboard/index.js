@@ -1,24 +1,30 @@
-import React, {Component} from 'react';
+import React, {Component, Fragment} from 'react';
 import './Dashboard.scss';
-import {addDataToAPI} from '../../../config/redux/action';
+import {addDataToAPI, getDataFromAPI} from '../../../config/redux/action';
 import { connect } from 'react-redux';
 
 class Dashboard extends Component{
-
     state = {
         title: '',
         content: '',
         date: ''
     }
 
+    componentDidMount () {
+        const userData = JSON.parse(localStorage.getItem("userData"));
+        this.props.getNotes(userData.uid)
+    }
+
     handleSaveNotes = () => {
         const {title, content, date} = this.state;
         const {saveNotes} = this.props;
+        const userData = JSON.parse(localStorage.getItem("userData"));
+        
         const data = {
             title: title,
             content: content,
             date: new Date().getTime(),
-            userID: this.props.userData.uid
+            userID: userData.uid
         }
         saveNotes(data)
         console.log(data)
@@ -33,6 +39,7 @@ class Dashboard extends Component{
     
     render(){
         const {title, content, date} = this.state;
+        console.log('notes : ', this.props.notes);
         return(
             <div className="container">
                 <div className="input-form">
@@ -44,11 +51,25 @@ class Dashboard extends Component{
                     <button className="save-btn" onClick={this.handleSaveNotes}>Simpan</button>
                 </div>
                 <hr/>
-                <div className="card-content">
-                    <p className="title">Title</p>
-                    <p className="date">24 Januari 2020</p>
-                    <p className="content">Content Notes</p>
-                </div>
+                {
+                    this.props.notes.length > 0 ? (
+                        <Fragment>
+                            {
+                                this.props.notes.map(note => {
+                                    return (
+                                        <div className="card-content" key={note.id}>
+                                            <p className="title">{note.data.title}</p>
+                                            <p className="date">{note.data.date}</p>
+                                            <p className="content">{note.data.content}</p>
+                                        </div>
+                                    )
+                                })
+                            }
+                        </Fragment>
+                    ) : null
+                }
+
+                
             </div>
             
         )
@@ -56,11 +77,14 @@ class Dashboard extends Component{
 }
 
 const reduxState = (state) => ({
-    userData: state.user
+    userData: state.user,
+    notes: state.notes
 })
 
 const reduxDispatch = (dispatch) => ({
-    saveNotes: (data) => dispatch(addDataToAPI(data))
+    saveNotes: (data) => dispatch(addDataToAPI(data)),
+    getNotes: (data) => dispatch(getDataFromAPI(data))
+
 })
 
 export default connect(reduxState, reduxDispatch) (Dashboard);
